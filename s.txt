@@ -1,27 +1,27 @@
 #!/bin/bash
 
-# Проверка, что скрипт выполняется с правами суперпользователя
+# Check if the script is run as root
 if [ "$(id -u)" -ne "0" ]; then
-    echo "Этот скрипт должен быть выполнен от имени суперпользователя (root)." >&2
+    echo "This script must be run as root." >&2
     exit 1
 fi
 
-# Путь к конфигурационным файлам Asterisk
+# Path to Asterisk configuration files
 SIP_CONF="/etc/asterisk/sip.conf"
 EXTENSIONS_CONF="/etc/asterisk/extensions.conf"
 
-# Запрашиваем информацию у пользователя
-read -p "Введите внутренний номер (например, 1003): " INTERNAL_NUMBER
-read -p "Введите пароль для номера $INTERNAL_NUMBER: " INTERNAL_PASSWORD
+# Prompt user for information
+read -p "Enter the internal number (e.g., 1003): " INTERNAL_NUMBER
+read -p "Enter the password for number $INTERNAL_NUMBER: " INTERNAL_PASSWORD
 
-# Проверка, что номер и пароль не пустые
+# Check that number and password are not empty
 if [ -z "$INTERNAL_NUMBER" ] || [ -z "$INTERNAL_PASSWORD" ]; then
-    echo "Номер и пароль не могут быть пустыми." >&2
+    echo "Number and password cannot be empty." >&2
     exit 1
 fi
 
-# Добавляем внутренний номер в файл sip.conf
-echo "Добавление внутреннего номера $INTERNAL_NUMBER в $SIP_CONF..."
+# Add internal number to sip.conf
+echo "Adding internal number $INTERNAL_NUMBER to $SIP_CONF..."
 echo "[$INTERNAL_NUMBER]" >> $SIP_CONF
 echo "type=friend" >> $SIP_CONF
 echo "secret=$INTERNAL_PASSWORD" >> $SIP_CONF
@@ -33,16 +33,16 @@ echo "allow=alaw" >> $SIP_CONF
 echo "allow=gsm" >> $SIP_CONF
 echo "" >> $SIP_CONF
 
-# Добавляем внутренний номер в файл extensions.conf
-echo "Добавление внутреннего номера $INTERNAL_NUMBER в $EXTENSIONS_CONF..."
+# Add internal number to extensions.conf
+echo "Adding internal number $INTERNAL_NUMBER to $EXTENSIONS_CONF..."
 echo "[internal]" >> $EXTENSIONS_CONF
 echo "exten => $INTERNAL_NUMBER,1,Dial(SIP/$INTERNAL_NUMBER,20)" >> $EXTENSIONS_CONF
 echo "exten => $INTERNAL_NUMBER,2,Voicemail($INTERNAL_NUMBER@default)" >> $EXTENSIONS_CONF
 echo "exten => $INTERNAL_NUMBER,3,Hangup()" >> $EXTENSIONS_CONF
 echo "" >> $EXTENSIONS_CONF
 
-# Перезагружаем Asterisk для применения изменений
-echo "Перезагрузка Asterisk..."
+# Reload Asterisk to apply changes
+echo "Reloading Asterisk..."
 asterisk -rx "core reload"
 
-echo "Настройка завершена. Внутренний номер $INTERNAL_NUMBER был добавлен."
+echo "Configuration complete. Internal number $INTERNAL_NUMBER has been added."
